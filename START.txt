@@ -1,0 +1,2 @@
+chmod +x setup_scraper.sh
+./setup_scraper.sh
