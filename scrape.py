@@ -1,4 +1,5 @@
-from selenium.webdriver import Remote, ChromeOptions
+from selenium.webdriver import Remote, Chrome, ChromeOptions
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -6,27 +7,37 @@ import os
 
 load_dotenv()
 
-SBR_WEBDRIVER = os.getenv("SBR_WEBDRIVER")
+chrome_driver_path = "./chromedriver"
 
-
-def scrape_website(website):
+def scrape_website(website, sbr_webdriver_url=None):
     print("Connecting to Scraping Browser...")
-    sbr_connection = ChromiumRemoteConnection(SBR_WEBDRIVER, "goog", "chrome")
-    with Remote(sbr_connection, options=ChromeOptions()) as driver:
+    driver = None
+    try:
+        if sbr_webdriver_url:
+            sbr_connection = ChromiumRemoteConnection(sbr_webdriver_url, "goog", "chrome")
+            driver = Remote(sbr_connection, options=ChromeOptions())
+            driver.get(website)
+        else:
+            raise ValueError("SBR_WEBDRIVER URL is not provided. Falling back to local driver.")
+    except Exception as e:
+        print(f"Failed to connect using SBR_WEBDRIVER: {e}")
+        print("Falling back to local driver...")
+        options = ChromeOptions()
+        driver = Chrome(service=Service(chrome_driver_path), options=options)
         driver.get(website)
-        print("Waiting captcha to solve...")
-        solve_res = driver.execute(
-            "executeCdpCommand",
-            {
-                "cmd": "Captcha.waitForSolve",
-                "params": {"detectTimeout": 10000},
-            },
-        )
-        print("Captcha solve status:", solve_res["value"]["status"])
-        print("Navigated! Scraping page content...")
-        html = driver.page_source
-        return html
 
+    print("Waiting captcha to solve...")
+    solve_res = driver.execute(
+        "executeCdpCommand",
+        {
+            "cmd": "Captcha.waitForSolve",
+            "params": {"detectTimeout": 10000},
+        },
+    )
+    print("Captcha solve status:", solve_res["value"]["status"])
+    print("Navigated! Scraping page content...")
+    html = driver.page_source
+    return html
 
 def extract_body_content(html_content):
     soup = BeautifulSoup(html_content, "html.parser")
@@ -34,7 +45,6 @@ def extract_body_content(html_content):
     if body_content:
         return str(body_content)
     return ""
-
 
 def clean_body_content(body_content):
     soup = BeautifulSoup(body_content, "html.parser")
@@ -49,7 +59,6 @@ def clean_body_content(body_content):
     )
 
     return cleaned_content
-
 
 def split_dom_content(dom_content, max_length=6000):
     return [

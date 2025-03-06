@@ -10,14 +10,15 @@ from parse import parse_with_ollama
 # Streamlit UI
 st.title("AI Web Scraper")
 url = st.text_input("Enter Website URL")
+sbr_webdriver_url = st.text_input("Enter the SBR_WEBDRIVER URL")
 
 # Step 1: Scrape the Website
 if st.button("Scrape Website"):
-    if url:
+    if url and sbr_webdriver_url:
         st.write("Scraping the website...")
 
         # Scrape the website
-        dom_content = scrape_website(url)
+        dom_content = scrape_website(url, sbr_webdriver_url)
         body_content = extract_body_content(dom_content)
         cleaned_content = clean_body_content(body_content)
 
@@ -27,7 +28,8 @@ if st.button("Scrape Website"):
         # Display the DOM content in an expandable text box
         with st.expander("View DOM Content"):
             st.text_area("DOM Content", cleaned_content, height=300)
-
+    else:
+        st.error("Please enter both the Website URL and the SBR_WEBDRIVER URL.")
 
 # Step 2: Ask Questions About the DOM Content
 if "dom_content" in st.session_state:
