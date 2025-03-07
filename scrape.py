@@ -1,5 +1,4 @@
-from selenium.webdriver import Remote, Chrome, ChromeOptions
-from selenium.webdriver.chrome.service import Service
+from selenium.webdriver import Remote, ChromeOptions
 from selenium.webdriver.chromium.remote_connection import ChromiumRemoteConnection
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -7,37 +6,20 @@ import os
 
 load_dotenv()
 
-chrome_driver_path = "./chromedriver"
+AUTH = 'brd-customer-hl_7670bc73-zone-scraping_browser2:hsml4onkrx2o'
+SBR_WEBDRIVER = f'https://{AUTH}@brd.superproxy.io:9515'
 
-def scrape_website(website, sbr_webdriver_url=None):
+def scrape_website(website, sbr_webdriver_url=SBR_WEBDRIVER):
     print("Connecting to Scraping Browser...")
-    driver = None
-    try:
-        if sbr_webdriver_url:
-            sbr_connection = ChromiumRemoteConnection(sbr_webdriver_url, "goog", "chrome")
-            driver = Remote(sbr_connection, options=ChromeOptions())
-            driver.get(website)
-        else:
-            raise ValueError("SBR_WEBDRIVER URL is not provided. Falling back to local driver.")
-    except Exception as e:
-        print(f"Failed to connect using SBR_WEBDRIVER: {e}")
-        print("Falling back to local driver...")
-        options = ChromeOptions()
-        driver = Chrome(service=Service(chrome_driver_path), options=options)
+    sbr_connection = ChromiumRemoteConnection(sbr_webdriver_url, "goog", "chrome")
+    with Remote(sbr_connection, options=ChromeOptions()) as driver:
+        print("Connected! Navigating...")
         driver.get(website)
-
-    print("Waiting captcha to solve...")
-    solve_res = driver.execute(
-        "executeCdpCommand",
-        {
-            "cmd": "Captcha.waitForSolve",
-            "params": {"detectTimeout": 10000},
-        },
-    )
-    print("Captcha solve status:", solve_res["value"]["status"])
-    print("Navigated! Scraping page content...")
-    html = driver.page_source
-    return html
+        print("Taking page screenshot to file page.png")
+        driver.get_screenshot_as_file('./page.png')
+        print("Navigated! Scraping page content...")
+        html = driver.page_source
+        return html
 
 def extract_body_content(html_content):
     soup = BeautifulSoup(html_content, "html.parser")

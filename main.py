@@ -6,6 +6,7 @@ from scrape import (
     split_dom_content,
 )
 from parse import parse_with_ollama
+import pandas as pd
 
 # Streamlit UI
 st.title("AI Web Scraper")
@@ -43,3 +44,9 @@ if "dom_content" in st.session_state:
             dom_chunks = split_dom_content(st.session_state.dom_content)
             parsed_result = parse_with_ollama(dom_chunks, parse_description)
             st.write(parsed_result)
+
+            # Convert parsed results to DataFrame and save to Excel
+            parsed_data = parsed_result.split('\n')
+            df = pd.DataFrame(parsed_data, columns=["Parsed Data"])
+            df.to_excel("parsed_data.xlsx", index=False)
+            st.success("Parsed data saved to parsed_data.xlsx")
