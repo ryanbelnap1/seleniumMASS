@@ -3,10 +3,8 @@
 # Update package list and upgrade installed packages
 sudo apt update && sudo apt upgrade -y
 
-# Install the latest version of Google Chrome
-wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-sudo dpkg -i google-chrome-stable_current_amd64.deb
-sudo apt -f install -y
+# Update Google Chrome to the latest version
+sudo apt install --only-upgrade google-chrome-stable -y
 
 # Create a virtual environment with python3 and activate it
 python3 -m venv venv
