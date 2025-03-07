@@ -1,4 +1,5 @@
 chmod +x setup_scraper.sh
+chmod +x chromedriver
 ./setup_scraper.sh
 source venv/bin/activate
 streamlit run main.py
