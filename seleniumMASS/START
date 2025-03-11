@@ -1,0 +1,13 @@
+To start the application, copy and paste these commands one by one into your terminal:
+
+chmod +x setup.sh
+./setup.sh
+source run.sh
+
+If you encounter any permission issues, run these additional commands:
+
+chmod +x *.sh
+chmod +x *.py
+chmod 755 downloaded_images
+chmod 755 downloaded_images/*
+chmod 600 .env

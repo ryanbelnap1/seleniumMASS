@@ -1,0 +1,13 @@
+streamlit
+langchain
+langchain_ollama
+ollama
+selenium
+beautifulsoup4
+python-dotenv
+requests
+Pillow
+webdriver_manager
+python-multipart
+pandas
+html5lib
