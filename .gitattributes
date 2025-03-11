@@ -1,0 +1,14 @@
+# Default to LF line endings for all text files
+* text=auto eol=lf
+
+# Explicitly declare text files
+*.py text
+*.sh text
+*.md text
+*.txt text
+.gitignore text
+.gitattributes text
+requirements.txt text
+
+# Ensure shell scripts use LF
+*.sh text eol=lf
