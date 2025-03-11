@@ -1,0 +1,8 @@
+streamlit
+selenium
+beautifulsoup4
+python-dotenv
+requests
+Pillow
+webdriver_manager
+python-multipart
