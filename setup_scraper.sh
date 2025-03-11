@@ -17,7 +17,7 @@ pip install -r requirements.txt
 pip install ollama
 
 # Run ollama command within the virtual environment
-ollama run llama3.3
+ollama run deepseek-r1
 
 # Confirm the setup is complete
 echo "Setup is complete!"
