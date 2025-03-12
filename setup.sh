@@ -41,42 +41,6 @@ prompt_api_keys() {
     fi
 }
 
-# Function to check and install Python
-check_python() {
-    if ! command -v python3 &> /dev/null; then
-        log "Installing Python..."
-        sudo apt-get update
-        sudo apt-get install -y python3 python3-pip python3-venv
-    fi
-}
-
-# Add Ollama check at the beginning
-check_ollama() {
-    if ! command -v ollama &> /dev/null; then
-        log "Installing Ollama..."
-        curl -fsSL https://ollama.com/install.sh | sh
-    fi
-}
-
-# Check Python installation
-check_python
-
-# Add after check_python
-check_ollama
-
-# Create and activate virtual environment
-log "Creating virtual environment..."
-python3 -m venv venv
-source venv/bin/activate
-
-# Update pip
-log "Updating pip..."
-pip install --upgrade pip
-
-# Install Python dependencies
-log "Installing Python dependencies..."
-pip install -r requirements.txt
-
 # Create necessary directories
 log "Creating necessary directories..."
 mkdir -p downloaded_images/{google_images,getty_images,shutterstock,unsplash_images,pexels_images}
@@ -85,8 +49,10 @@ mkdir -p downloaded_images/{google_images,getty_images,shutterstock,unsplash_ima
 log "Setting up API configuration..."
 prompt_api_keys
 
+# Final setup message
+log "Setup complete! Run 'source run.sh' to start the application"
+
 # Create run script
-log "Creating run script..."
 cat > run.sh << 'EOF'
 #!/bin/bash
 source venv/bin/activate
@@ -94,14 +60,3 @@ streamlit run main.py
 EOF
 
 chmod +x run.sh
-
-# Set permissions
-log "Setting permissions..."
-chmod +x *.py
-chmod +x *.sh
-chmod 755 downloaded_images
-chmod 755 downloaded_images/*
-[ -f ".env" ] && chmod 600 .env
-
-# Final setup message
-log "Setup complete! Run 'source run.sh' to start the application"
