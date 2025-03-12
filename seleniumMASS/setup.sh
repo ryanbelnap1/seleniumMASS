@@ -5,30 +5,6 @@ log() {
     echo "[SETUP] $1"
 }
 
-# Function to check and install Python
-check_python() {
-    if ! command -v python3 &> /dev/null; then
-        log "Installing Python..."
-        sudo apt-get update
-        sudo apt-get install -y python3 python3-pip python3-venv
-    fi
-}
-
-# Function to check and install Chrome
-install_chrome() {
-    if ! command -v google-chrome &> /dev/null; then
-        log "Installing Google Chrome..."
-        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
-        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
-        sudo apt-get update
-        sudo apt-get install -y google-chrome-stable
-    else
-        log "Updating Google Chrome..."
-        sudo apt-get update
-        sudo apt-get install --only-upgrade google-chrome-stable
-    fi
-}
-
 # Function to prompt for API keys
 prompt_api_keys() {
     echo "Would you like to configure API keys for additional image sources? (y/n)"
@@ -65,19 +41,32 @@ prompt_api_keys() {
     fi
 }
 
-# Set permissions for Python files
-log "Setting permissions for Python files..."
-chmod +x *.py
+# Function to check and install Python
+check_python() {
+    if ! command -v python3 &> /dev/null; then
+        log "Installing Python..."
+        sudo apt-get update
+        sudo apt-get install -y python3 python3-pip python3-venv
+    fi
+}
 
-# Check and install dependencies
+# Add Ollama check at the beginning
+check_ollama() {
+    if ! command -v ollama &> /dev/null; then
+        log "Installing Ollama..."
+        curl -fsSL https://ollama.com/install.sh | sh
+    fi
+}
+
+# Check Python installation
 check_python
-install_chrome
+
+# Add after check_python
+check_ollama
 
 # Create and activate virtual environment
 log "Creating virtual environment..."
 python3 -m venv venv
-
-log "Activating virtual environment..."
 source venv/bin/activate
 
 # Update pip
@@ -87,18 +76,6 @@ pip install --upgrade pip
 # Install Python dependencies
 log "Installing Python dependencies..."
 pip install -r requirements.txt
-
-# Set chromedriver permissions
-log "Setting chromedriver permissions..."
-if [ -f "chromedriver" ]; then
-    chmod +x chromedriver
-fi
-
-# Create .env file if it doesn't exist
-log "Creating .env file..."
-if [ ! -f ".env" ]; then
-    cp sample.env .env
-fi
 
 # Create necessary directories
 log "Creating necessary directories..."
@@ -117,5 +94,14 @@ streamlit run main.py
 EOF
 
 chmod +x run.sh
+
+# Set permissions
+log "Setting permissions..."
+chmod +x *.py
+chmod +x *.sh
+chmod 755 downloaded_images
+chmod 755 downloaded_images/*
+[ -f ".env" ] && chmod 600 .env
+
 # Final setup message
 log "Setup complete! Run 'source run.sh' to start the application"

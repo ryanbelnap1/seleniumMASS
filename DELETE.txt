@@ -1,1 +1,0 @@
-rm -f set_permissions.sh checkthis.txt

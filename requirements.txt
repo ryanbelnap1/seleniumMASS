@@ -6,3 +6,9 @@ requests
 Pillow
 webdriver_manager
 python-multipart
+pandas
+langchain
+langchain-community
+langchain-core
+langchain-ollama
+ollama
