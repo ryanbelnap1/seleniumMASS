@@ -1,15 +1,21 @@
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+import random
+import time
+import os
 import requests
 import io
 from PIL import Image
-import time
-import os
+from utils import get_undetected_driver
 
 class ImageScraper:
-    def __init__(self, driver):
-        self.driver = driver
+    def __init__(self):
+        self.driver = get_undetected_driver()
+        
+    def __del__(self):
+        if hasattr(self, 'driver'):
+            self.driver.quit()
         
     def scroll_down(self, delay=1):
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
@@ -31,31 +37,72 @@ class ImageScraper:
             return False
 
 class GoogleImageScraper(ImageScraper):
-    def scrape(self, search_query, max_images=6, delay=1):
-        search_url = f"https://www.google.com/search?q={search_query}&tbm=isch"
-        self.driver.get(search_url)
-        
-        image_urls = set()
-        skips = 0
-        
-        while len(image_urls) + skips < max_images:
-            self.scroll_down(delay)
+    def scrape(self, search_query, max_images=6, delay=2):
+        try:
+            search_query = search_query.replace(' ', '+')
+            search_url = f"https://www.google.com/search?q={search_query}&tbm=isch"
             
-            thumbnails = self.driver.find_elements(By.CLASS_NAME, "Q4LuWd")
+            print(f"Accessing URL: {search_url}")
+            self.driver.get(search_url)
+            time.sleep(delay)
             
-            for img in thumbnails[len(image_urls) + skips:max_images]:
-                try:
-                    img.click()
-                    time.sleep(delay)
-                except:
-                    continue
+            image_urls = set()
+            
+            WebDriverWait(self.driver, 20).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "img.rg_i"))
+            )
+            
+            scroll_attempts = 0
+            max_scrolls = 8
+            
+            while len(image_urls) < max_images and scroll_attempts < max_scrolls:
+                # Scroll and wait
+                self.driver.execute_script("window.scrollBy(0, 1000);")
+                time.sleep(delay)
                 
-                images = self.driver.find_elements(By.CLASS_NAME, "n3VNCb")
-                for image in images:
-                    if image.get_attribute('src') and 'http' in image.get_attribute('src'):
-                        image_urls.add(image.get_attribute('src'))
-        
-        return image_urls
+                # Find all image elements
+                elements = self.driver.find_elements(By.CSS_SELECTOR, "img.rg_i")
+                
+                for element in elements:
+                    try:
+                        # Click on the image to get the full resolution version
+                        element.click()
+                        time.sleep(delay)
+                        
+                        # Try to get the full-resolution image
+                        actual_images = self.driver.find_elements(
+                            By.CSS_SELECTOR, 
+                            "img.n3VNCb, img.r48jcc, img.iPVvYb"
+                        )
+                        
+                        for img in actual_images:
+                            src = img.get_attribute('src')
+                            if src and src.startswith('http') and src not in image_urls:
+                                if self.is_valid_image(src):
+                                    image_urls.add(src)
+                                    print(f"Found image: {src}")
+                                    if len(image_urls) >= max_images:
+                                        return list(image_urls)
+                    except:
+                        continue
+                
+                scroll_attempts += 1
+            
+            return list(image_urls)
+            
+        except Exception as e:
+            print(f"Error in Google scraper: {str(e)}")
+            return list(image_urls)
+
+    def is_valid_image(self, url):
+        try:
+            response = requests.head(url, timeout=5)
+            content_type = response.headers.get('content-type', '')
+            return ('image' in content_type.lower() and 
+                    not url.endswith(('.svg', '.gif')) and 
+                    'data:image' not in url)
+        except:
+            return False
 
 class GettyImageScraper(ImageScraper):
     def scrape(self, search_query, max_images=6, delay=1):

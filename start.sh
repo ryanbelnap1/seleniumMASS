@@ -5,36 +5,6 @@ log() {
     echo "[SETUP] $1"
 }
 
-# Check if Ollama is installed
-check_ollama() {
-    if ! command -v ollama &> /dev/null; then
-        log "Installing Ollama..."
-        curl -fsSL https://ollama.com/install.sh | sh
-    fi
-}
-
-# Check if Ollama service is running
-check_ollama_service() {
-    if ! curl -s http://localhost:11434/api/tags &> /dev/null; then
-        log "Starting Ollama service..."
-        ollama serve &
-        sleep 5  # Wait for service to start
-    fi
-}
-
-# Check if TinyLlama model is pulled
-check_tinyllama() {
-    if ! ollama list | grep -q "tinyllama"; then
-        log "Pulling TinyLlama model..."
-        ollama pull tinyllama
-    fi
-}
-
-# Install system dependencies
-log "Installing system dependencies..."
-sudo apt-get update
-sudo apt-get install -y python3 python3-pip python3-venv wget unzip curl
-
 # Install Chrome if not present
 if ! command -v google-chrome &> /dev/null; then
     log "Installing Google Chrome..."
@@ -43,7 +13,7 @@ if ! command -v google-chrome &> /dev/null; then
     rm google-chrome-stable_current_amd64.deb
 fi
 
-# Setup ChromeDriver
+# Setup ChromeDriver with additional configurations
 log "Setting up ChromeDriver..."
 CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
 wget -q "https://chromedriver.storage.googleapis.com/LATEST_RELEASE_${CHROME_VERSION}" -O chrome_version
@@ -52,8 +22,23 @@ rm chrome_version
 wget -q "https://chromedriver.storage.googleapis.com/${DRIVER_VERSION}/chromedriver_linux64.zip"
 unzip -q chromedriver_linux64.zip
 chmod +x chromedriver
+
+# Add additional permissions for undetectable operation
+sudo chown root:root chromedriver
+sudo chmod 755 chromedriver
 sudo mv chromedriver /usr/local/bin/
 rm chromedriver_linux64.zip
+
+# Create Chrome policies directory for additional settings
+sudo mkdir -p /etc/opt/chrome/policies/managed/
+cat << EOF | sudo tee /etc/opt/chrome/policies/managed/chrome_policies.json
+{
+    "CommandLineFlagSecurityWarningsEnabled": false,
+    "DefaultBrowserSettingEnabled": false,
+    "ChromeCleanupEnabled": false,
+    "MetricsReportingEnabled": false
+}
+EOF
 
 # Setup Python environment
 log "Setting up Python environment..."
